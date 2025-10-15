@@ -88,7 +88,9 @@ export const reactionEmoji = wrapAsync( async (req, res) =>{
     }
 
    await Message.updateOne(
-        { _id: messageId },   // filter object!
+        { _id: messageId,
+            "readBy.userId": { $ne: userId }
+         },   // filter object!
         {
             $push: {
             reactions: {
@@ -102,5 +104,34 @@ export const reactionEmoji = wrapAsync( async (req, res) =>{
 
     res.status(200).json({
         message:'add emoji'
+    })
+})
+
+export const markAsRead = wrapAsync( async (req, res) =>{
+    const { messageId } = req.params;
+    const userId = req.user._id.toString()
+
+    const message = await Message.findById(messageId)
+    if(!message){
+        throw new NotFoundError('Message not found');
+    }
+
+    await Message.updateOne(
+        {
+        _id: messageId,
+        "readBy.userId": { $ne: userId } // Avoid duplicates
+        },
+        {
+        $push: {
+            readBy: {
+            userId: userId,
+            readAt: new Date()
+            }
+        }
+        }
+    );
+
+    res.status(200).json({
+        message:'seen'
     })
 })

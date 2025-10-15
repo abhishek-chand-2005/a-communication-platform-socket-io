@@ -1,6 +1,6 @@
 import express from 'express'
 const router = express.Router()
-import { sendMessage, getMessage, editMessage, deleteMessage, reactionEmoji } from '../controllers/message.controller.js'
+import { sendMessage, getMessage, editMessage, deleteMessage, reactionEmoji, markAsRead } from '../controllers/message.controller.js'
 import {userMiddleware} from '../middlewares/user.middleware.js'
 
 router.post('/newMessage',
@@ -26,6 +26,11 @@ router.get('/deleteMessage/:messageId',
 router.post('/addReaction/:messageId',
     userMiddleware,
     reactionEmoji
+)
+
+router.get('/markAsRead/:messageId',
+    userMiddleware,
+    markAsRead
 )
 
 export default router
