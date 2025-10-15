@@ -1,0 +1,77 @@
+import wrapAsync from "../utils/tryCatchWrapper.js"
+import Message from '../models/message.model.js'
+
+export const sendMessage = wrapAsync( async (req, res) =>{
+    const {message} = req.body;
+    const user = req.user._id.toString()
+
+    const newMessage = await Message.create({
+        senderId: user,
+        content: message
+    })
+
+    res.status(200).json({
+        message:"message Created",
+        newMessage
+    })
+
+})
+
+export const getMessage = wrapAsync( async (req, res) =>{
+    const user = req.user._id;
+
+    const messages = await Message.find({ senderId: user })
+    .sort({ timestamp: -1 })
+    .limit(50)
+
+    res.status(200).json({
+        message: "Here are your messages",
+        data: messages
+    });
+})
+
+export const editMessage = wrapAsync( async (req, res) =>{
+    const { messageId } = req.params;
+    const {newContent} = req.body;
+    const userId = req.user._id.toString()
+
+    const message = await Message.findById(messageId)
+    if(!message){
+        throw new NotFoundError('Message not found');
+    }
+
+    if(message.senderId.toString() !== userId){
+        throw new ForbiddenError('You can only edit your own messages');
+    }
+
+    message.content = newContent;
+
+    await message.save()
+
+    res.status(200).json({
+        message:"Message update successfully",
+        updatedMessage: message
+
+    })
+})
+
+export const deleteMessage = wrapAsync( async (req, res) =>{
+    const { messageId } = req.params;
+    const userId = req.user._id.toString()
+
+    const message = await Message.findById(messageId)
+    if(!message){
+        throw new NotFoundError('Message not found');
+    }
+
+    if(message.senderId.toString() !== userId){
+        throw new ForbiddenError('You can only edit your own messages');
+    }
+
+    const messageDeleted = await Message.deleteOne({_id: messageId})
+    res.status(200).json({
+        message:"Message delete successfully",
+        deletedMessage: messageDeleted,
+        content: message.content
+    })
+})
