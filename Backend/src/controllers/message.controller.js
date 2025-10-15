@@ -1,5 +1,6 @@
 import wrapAsync from "../utils/tryCatchWrapper.js"
 import Message from '../models/message.model.js'
+import mongoose from "mongoose";
 
 export const sendMessage = wrapAsync( async (req, res) =>{
     const {message} = req.body;
@@ -73,5 +74,33 @@ export const deleteMessage = wrapAsync( async (req, res) =>{
         message:"Message delete successfully",
         deletedMessage: messageDeleted,
         content: message.content
+    })
+})
+
+export const reactionEmoji = wrapAsync( async (req, res) =>{
+    const { messageId } = req.params;
+    const userId = req.user._id.toString()
+    const {emoji} = req.body
+
+    const message = await Message.findById(messageId)
+    if(!message){
+        throw new NotFoundError('Message not found');
+    }
+
+   await Message.updateOne(
+        { _id: messageId },   // filter object!
+        {
+            $push: {
+            reactions: {
+                userId: userId,
+                emoji: emoji
+            }
+            }
+        }
+    );
+
+
+    res.status(200).json({
+        message:'add emoji'
     })
 })
